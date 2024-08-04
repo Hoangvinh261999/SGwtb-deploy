@@ -1,0 +1,39 @@
+services:
+  mssql-db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: mssql-db
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "hoangvinh@99"
+      ACCEPT_EULA: "Y"
+    volumes:
+      - mssql-data:/var/opt/mssql
+      - ./mssql-init:/docker-entrypoint-initdb.d
+
+  backend:
+    image: openjdk:17-jdk-alpine
+    container_name: spring-boot-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/saigonwaterbus-0.0.1-SNAPSHOT.jar:/saigonwaterbus-0.0.1-SNAPSHOT.jar
+    command: ["java", "-jar", "/saigonwaterbus-0.0.1-SNAPSHOT.jar"]
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlserver://mssql-db:1433;databaseName=SaiGonWaterBusPhuong;encrypt=true;trustServerCertificate=true
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: hoangvinh@99
+    depends_on:
+      - mssql-db
+   
+  frontend:
+    image: nginx:latest
+    container_name: react-frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend/build:/usr/share/nginx/html
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf
+
+volumes:
+  mssql-data:
